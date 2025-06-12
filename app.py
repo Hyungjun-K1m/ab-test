@@ -1,29 +1,29 @@
 from pathlib import Path
 import random, sqlite3, time
 from flask import Flask, render_template, request, jsonify, url_for
-import os, re, csv, random
+import os, re, csv
 
 app = Flask(__name__)
 DB = "votes.db"
 
-
-TITLES= {}
-with open(“prompts.csv”, newline=“”, encoding=“utf-8") as f:
+TITLES = {}
+with open("prompts.csv", newline="", encoding="utf-8") as f:
     reader = csv.reader(f)
     for i, row in enumerate(reader, start=1):
         TITLES[str(i)] = row[0].strip()
+
 def prompt_number(prompt_stem: str) -> str:
-    return prompt_stem.split(“_”)[-1]
+    return prompt_stem.split("_")[-1]
+
 def prompt_title(prompt_stem: str) -> str:
     num = prompt_number(prompt_stem)
     return TITLES.get(num, prompt_stem)
-    
 
 # --------------------------------------------------
-# 1) 디렉터리 스캔:  FILES[prompt][category] = <Path>
+# 1) 디렉터리 스캔: FILES[prompt][category] = <Path>
 # --------------------------------------------------
 IMG_ROOT = Path("static/images")
-ALLOWED_EXTS = {“.png”, “.jpg”, “.jpeg”, “.webp”, “.gif”}
+ALLOWED_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 FILES = {}            # { prompt : { category: Path(...) } }
 for cat_dir in IMG_ROOT.iterdir():
     if not cat_dir.is_dir():
@@ -33,11 +33,10 @@ for cat_dir in IMG_ROOT.iterdir():
         if (
             p.is_file()
             and p.suffix.lower() in ALLOWED_EXTS
-            and not p.name.startswith(“.”)
+            and not p.name.startswith(".")
         ):
             prompt = p.stem                     # 확장자 제거
             FILES.setdefault(prompt, {})[cat] = p
-
 PROMPTS_AVAILABLE = [k for k, v in FILES.items() if len(v) >= 2]
 if not PROMPTS_AVAILABLE:
     raise RuntimeError("두 개 이상 카테고리가 가진 이미지가 없습니다!")
@@ -71,14 +70,13 @@ def init_db():
               category TEXT PRIMARY KEY,
               rating   REAL
             );
-        """
+            """
         )
 
 # --------------------------------------------------
 # 3) Elo 계산 (카테고리 단위)
 # --------------------------------------------------
 K = 32
-
 def expected(r_a, r_b):
     return 1 / (1 + 10 ** ((r_b - r_a) / 400))
 
@@ -127,61 +125,57 @@ def pick_pair():
 # --------------------------------------------------
 # 5) Routes
 # --------------------------------------------------
-@app.route(“/”)
+@app.route("/")
 def index():
     prompt, (cat_l, path_l), (cat_r, path_r) = pick_pair()
-    print(prompt)
-    print(prompt_title(prompt))
     return render_template(
-        “index.html”,
+        "index.html",
         prompt=prompt,
-        prompt_text = prompt_title(prompt),
-        left=url_for(“static”, filename=f”images/{cat_l}/{path_l.name}“),
-        right=url_for(“static”, filename=f”images/{cat_r}/{path_r.name}“),
+        prompt_text=prompt_title(prompt),
+        left=url_for("static", filename=f"images/{cat_l}/{path_l.name}"),
+        right=url_for("static", filename=f"images/{cat_r}/{path_r.name}"),
         left_cat=cat_l,
         right_cat=cat_r,
     )
-@app.post(“/vote”)
+
+@app.post("/vote")
 def vote():
     data = request.json
-    prompt = data[“prompt”]
-    cat_l = data[“left_cat”]
-    cat_r = data[“right_cat”]
-    result = data[“result”]               # left / right / similar
-    # 기록
+    prompt = data["prompt"]
+    cat_l = data["left_cat"]
+    cat_r = data["right_cat"]
+    result = data["result"]               # left / right / similar
+
     with get_conn() as conn:
         conn.execute(
-            “INSERT INTO votes(prompt,left_cat,right_cat,result,ts) VALUES(?,?,?,?,?)“,
+            "INSERT INTO votes(prompt,left_cat,right_cat,result,ts) VALUES(?,?,?,?,?)",
             (prompt, cat_l, cat_r, result, time.time()),
         )
-    # Elo 갱신
+
     update_elo(cat_l, cat_r, result)
-    # 새 쌍 리턴
+
     new_prompt, (n_cat_l, n_path_l), (n_cat_r, n_path_r) = pick_pair()
-    new_title = prompt_title(new_prompt)
     return jsonify(
         {
-            “prompt”: new_prompt,
-            “prompt_text”: new_title,
-            “left”: url_for(“static”, filename=f”images/{n_cat_l}/{n_path_l.name}“),
-            “right”: url_for(“static”, filename=f”images/{n_cat_r}/{n_path_r.name}“),
-            “left_cat”: n_cat_l,
-            “right_cat”: n_cat_r,
+            "prompt": new_prompt,
+            "prompt_text": prompt_title(new_prompt),
+            "left": url_for("static", filename=f"images/{n_cat_l}/{n_path_l.name}"),
+            "right": url_for("static", filename=f"images/{n_cat_r}/{n_path_r.name}"),
+            "left_cat": n_cat_l,
+            "right_cat": n_cat_r,
         }
     )
-@app.route(“/admin”)
+
+@app.route("/admin")
 def admin():
     with get_conn() as conn:
         rows = conn.execute(
-            “SELECT category, rating FROM elo ORDER BY rating DESC”
+            "SELECT category, rating FROM elo ORDER BY rating DESC"
         ).fetchall()
-    return render_template(“admin.html”, rows=rows)
+    return render_template("admin.html", rows=rows)
 
 # --------------------------------------------------
 if __name__ == "__main__":
     init_db()
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-    
-
