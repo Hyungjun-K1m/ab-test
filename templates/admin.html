@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Admin · {{ prompt }}</title>
+  <style>
+    body{font-family:sans-serif;padding:1rem}
+    table{border-collapse:collapse}
+    th,td{border:1px solid #ddd;padding:.4rem .8rem;text-align:left}
+  </style>
+</head>
+<body>
+  <h1>Elo 랭킹 (prompt = {{ prompt }})</h1>
+  <form>
+    <select name="prompt" onchange="this.form.submit()">
+      {% for p in PROMPTS.keys() %}
+      <option value="{{ p }}" {% if p==prompt %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  <table>
+    <thead><tr><th>#</th><th>이미지</th><th>Elo</th></tr></thead>
+    <tbody>
+      {% for i,row in enumerate(rows,1) %}
+      <tr>
+        <td>{{ i }}</td>
+        <td><img src="{{ url_for('static',filename='images/'+prompt+'/'+row[0]) }}" style="height:60px"></td>
+        <td>{{ '%.0f'|format(row[1]) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
+
