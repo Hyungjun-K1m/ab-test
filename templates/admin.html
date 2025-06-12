@@ -2,34 +2,58 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Admin · {{ prompt }}</title>
+  <title>Admin · 카테고리 Elo 랭킹</title>
+
   <style>
-    body{font-family:sans-serif;padding:1rem}
-    table{border-collapse:collapse}
-    th,td{border:1px solid #ddd;padding:.4rem .8rem;text-align:left}
+    body{
+      font-family:sans-serif;
+      margin:0;
+      padding:2rem;
+      background:#f7f7f7;
+    }
+    h1{margin-top:0}
+    table{
+      border-collapse:collapse;
+      width:100%;
+      max-width:600px;
+    }
+    th,td{
+      border:1px solid #ccc;
+      padding:.5rem .8rem;
+      text-align:left;
+    }
+    th{background:#eee}
   </style>
 </head>
+
 <body>
-  <h1>Elo 랭킹 (prompt = {{ prompt }})</h1>
-  <form>
-    <select name="prompt" onchange="this.form.submit()">
-      {% for p in PROMPTS.keys() %}
-      <option value="{{ p }}" {% if p==prompt %}selected{% endif %}>{{ p }}</option>
-      {% endfor %}
-    </select>
-  </form>
+  <h1>카테고리 Elo 랭킹</h1>
+
   <table>
-    <thead><tr><th>#</th><th>이미지</th><th>Elo</th></tr></thead>
-    <tbody>
-      {% for i,row in enumerate(rows,1) %}
+    <thead>
       <tr>
-        <td>{{ i }}</td>
-        <td><img src="{{ url_for('static',filename='images/'+prompt+'/'+row[0]) }}" style="height:60px"></td>
-        <td>{{ '%.0f'|format(row[1]) }}</td>
+        <th>#</th>
+        <th>카테고리</th>
+        <th>Elo</th>
       </tr>
-      {% endfor %}
+    </thead>
+    <tbody>
+      {% if rows %}
+        {% for row in rows %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ row[0] }}</td>
+          <td>{{ '%.0f'|format(row[1]) }}</td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="3" style="text-align:center">
+            아직 데이터가 없습니다.
+          </td>
+        </tr>
+      {% endif %}
     </tbody>
   </table>
 </body>
 </html>
-
