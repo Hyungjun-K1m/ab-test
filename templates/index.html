@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang=“ko”>
+<html lang="ko">
 <head>
-  <meta charset=“utf-8">
+  <meta charset="utf-8">
   <title>퀄리티 비교하기</title>
   <style>
     *{box-sizing:border-box}
@@ -18,31 +18,36 @@
 <body>
   <!-- 비교 정보 -->
   <div>
-    <span id=“prompt-label”>{{ prompt_text }}</span>
-    <!-- <h2 id=“title-label”>{{ prompt_title }}</h2> -->
+    <span id="prompt-label">{{ prompt_text }}</span>
+    <!-- <h2 id="title-label">{{ prompt_title }}</h2> -->
   </div>
+
   <!-- 이미지 두 장 -->
-  <div id=“pair”>
-    <img id=“left”  src=“{{ left  }}” alt=“left”>
-    <img id=“right” src=“{{ right }}” alt=“right”>
+  <div id="pair">
+    <img id="left"  src="{{ left }}"  alt="left">
+    <img id="right" src="{{ right }}" alt="right">
   </div>
+
   <!-- 안내 -->
   <p>← : 왼쪽 폴더 승 &nbsp;|&nbsp; ↓ : 비슷 &nbsp;|&nbsp; → : 오른쪽 폴더 승</p>
+
   <script>
   // 현재 상태 변수
-  let promptName = “{{ prompt }}“;
-  let promptText = “{{ prompt_text }}“;   // ← 추가
-  let leftCat    = “{{ left_cat }}“;
-  let rightCat   = “{{ right_cat }}“;
+  let promptName = "{{ prompt }}";
+  let promptText = "{{ prompt_text }}";   // ← 추가
+  let leftCat    = "{{ left_cat }}";
+  let rightCat   = "{{ right_cat }}";
+
   // 요소
-  const leftImg   = document.getElementById(‘left’);
-  const rightImg  = document.getElementById(‘right’);
-  const promptLbl = document.getElementById(‘prompt-label’);
+  const leftImg   = document.getElementById('left');
+  const rightImg  = document.getElementById('right');
+  const promptLbl = document.getElementById('prompt-label');
+
   // 서버에 결과 전송
   function send(result){
-    fetch(‘/vote’,{
-      method:‘POST’,
-      headers:{‘Content-Type’:‘application/json’},
+    fetch('/vote',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         prompt   : promptName,
         prompt_text: promptText,
@@ -57,31 +62,31 @@
       leftImg.src  = data.left;
       rightImg.src = data.right;
       // highlight 제거
-      leftImg.classList.remove(‘highlight’);
-      rightImg.classList.remove(‘highlight’);
+      leftImg.classList.remove('highlight');
+      rightImg.classList.remove('highlight');
       // 새 상태 저장
       promptName = data.prompt;
       promptText = data.prompt_text;     // ← 추가
       leftCat    = data.left_cat;
       rightCat   = data.right_cat;
-      promptLbl.textContent = promptName;
-      document.getElementById(‘prompt-label’).textContent = promptText;
+      promptLbl.textContent = promptText;
     })
     .catch(console.error);
   }
+
   // 키보드 입력
-  document.addEventListener(‘keydown’, e=>{
+  document.addEventListener('keydown', e=>{
     switch(e.key){
-      case ‘ArrowLeft’:
-        leftImg.classList.add(‘highlight’);
-        send(‘left’);
+      case 'ArrowLeft':
+        leftImg.classList.add('highlight');
+        send('left');
         break;
-      case ‘ArrowRight’:
-        rightImg.classList.add(‘highlight’);
-        send(‘right’);
+      case 'ArrowRight':
+        rightImg.classList.add('highlight');
+        send('right');
         break;
-      case ‘ArrowDown’:
-        send(‘similar’);
+      case 'ArrowDown':
+        send('similar');
         break;
     }
   });
